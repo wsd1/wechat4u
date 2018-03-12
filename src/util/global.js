@@ -2,6 +2,8 @@
 import Assert from 'assert'
 import _debug from 'debug'
 const debug = _debug('util')
+import moment from 'moment'
+
 
 export const isStandardBrowserEnv = (
   typeof window !== 'undefined' &&
@@ -52,6 +54,8 @@ export const assert = {
     try {
       Assert.equal(actual, expected)
     } catch (e) {
+      console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
+
       debug(e)
       delete response.request
       e.response = response
@@ -62,6 +66,7 @@ export const assert = {
     try {
       Assert.notEqual(actual, expected)
     } catch (e) {
+      console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
       debug(e)
       delete response.request
       e.response = response
@@ -72,6 +77,8 @@ export const assert = {
     try {
       Assert.ok(actual)
     } catch (e) {
+      console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
+
       debug(e)
       delete response.request
       e.response = response

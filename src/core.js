@@ -3,6 +3,7 @@ import bl from 'bl'
 import _debug from 'debug'
 import FormData from 'form-data'
 import mime from 'mime'
+
 import {
   getCONF,
   Request,
@@ -67,6 +68,7 @@ export default class WechatCore {
         }
         // res.data: "window.QRLogin.code = xxx; ..."
         // eslint-disable-next-line
+        //console.log("res.data: " + res.data);
         eval(res.data)
         assert.equal(window.QRLogin.code, 200, res)
 
@@ -95,11 +97,13 @@ export default class WechatCore {
         let window = {}
 
         // eslint-disable-next-line
+        //console.log("checkLogin res.data: " + res.data);
+
         eval(res.data)
         assert.notEqual(window.code, 400, res)
 
         if (window.code === 200) {
-          this.CONF = getCONF(window.redirect_uri.match(/(?:\w+\.)+\w+/)[0])
+            this.CONF = getCONF(window.redirect_uri.match(/(?:\w+\.)+\w+/)[0]) //wx.qq.com
           this.rediUri = window.redirect_uri
         } else if (window.code === 201 && window.userAvatar) {
           // this.user.userAvatar = window.userAvatar
@@ -122,6 +126,8 @@ export default class WechatCore {
           fun: 'new'
         }
       }).then(res => {
+
+        //console.log(`---------login---------\n${res.data}\n---------end---------`)
         let pm = res.data.match(/<ret>(.*)<\/ret>/)
         if (pm && pm[1] === '0') {
           this.PROP.skey = res.data.match(/<skey>(.*)<\/skey>/)[1]
@@ -164,6 +170,27 @@ export default class WechatCore {
         params: params,
         data: data
       }).then(res => {
+        //这里的结果中 包含：ContactList
+        /*
+        {
+            "BaseResponse":Object{...},
+            "Count":11,
+            "ContactList":Array[11],
+            "SyncKey":Object{...},
+            "User":Object{...},
+            "ChatSet":"filehelper,@@e825da9efe124df880b1414778ba1d9e942251c85a375d534a526dc2e0daf9fc,@@8c226cae6823af7f60c78f18edae1edaa2a52906d7e83621f5e584ee26384ca1,filehelper,weixin,@@2568efd271990637e3b2bf7ba15a1a39e67dda705f3acffa0e75ae214d6401a4,@@ae738456484b673a8c6b08abc4c5b0d4481e67b5d898bfc6af64cf73bcb32320,@40fe7ac14f4fab8aab248fa8d864de8508781514082a0f248a533b44091b416b,@@13f7bbf98fa2b9e100af2290f175130c5679e1db10412066a6de4dd7757dc31b,@28bae3eb066cdaf0092673c2b3584f5c06ecb99496f8c10ff1449a54e4737e1a,@074d355f29b18f44cb3d5e66372d04822afb897e51e3e990fe71306427318399,@4fbf6c55bce88efa7a8b63686ec7baf7,@@d14d1d6ed8fb4ee121a617ec90601fe3cbea4949f48611a06fb0b84e17c7d100,@afe3779ac75f0c5de86eca811db06b8f,@@3c99d68f20583815f4d2e444f91022d5633382948816073c3af47b84d8a3bd65,fmessage,@@6bff901b4818c57a4a6807a456bb7ad688166b15a098c5555cbdb62dd5855f66,@72b0b64cc1cf04d056239ed0f403e11d8cda2e712e223ae9afd087b7b5ad04a8,@@61269c1c858cbb3ada089b11c5819f3c17f879bd481bb169516e1c2be3c6a2e9,@@6141069aed94b8818c992589d887ea84851c6f51ca511c60d939f2aa0192a78e,@6b0854b64c69025df6b4de4d2184af2b85d148d119ecad764f81f093048d079a,@bd71f2db992220def388ec728a343342,",
+            "SKey":"@crypt_61dbe263_8512fad3aee8376f48e6249fc1c86d4d",
+            "ClientVersion":637928249,
+            "SystemTime":1520758744,
+            "GrayScale":1,
+            "InviteStartCount":40,
+            "MPSubscribeMsgCount":2,
+            "MPSubscribeMsgList":Array[2],
+            "ClickReportInterval":600000
+        }
+        */
+        console.log(`---------init---------\n${JSON.stringify(res.data)}\n---------end---------`)
+
         let data = res.data
         assert.equal(data.BaseResponse.Ret, 0, res)
         this.PROP.skey = data.SKey || this.PROP.skey

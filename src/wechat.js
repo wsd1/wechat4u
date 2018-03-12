@@ -348,7 +348,7 @@ class Wechat extends WechatCore {
   }
 
   _getPollingInterval () { // Default polling interval
-    return 5 * 60 * 1000
+    return 30 * 60 * 1000
   }
 
   _getPollingTarget () { // Default polling target user
