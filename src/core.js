@@ -83,6 +83,8 @@ export default class WechatCore {
   }
 
   checkLogin () {
+
+    //console.log('========= this.checkLogin ==========')
     return Promise.resolve().then(() => {
       let params = {
         'tip': 0,
@@ -101,7 +103,11 @@ export default class WechatCore {
 
         eval(res.data)
         assert.notEqual(window.code, 400, res)
-
+        /*
+          408 登陆超时
+          201 扫描成功
+          200 确认登录
+        */
         if (window.code === 200) {
             this.CONF = getCONF(window.redirect_uri.match(/(?:\w+\.)+\w+/)[0]) //wx.qq.com
           this.rediUri = window.redirect_uri
@@ -189,7 +195,7 @@ export default class WechatCore {
             "ClickReportInterval":600000
         }
         */
-        console.log(`---------init---------\n${JSON.stringify(res.data)}\n---------end---------`)
+        //console.log(`---------init---------\n${JSON.stringify(res.data)}\n---------end---------`)
 
         let data = res.data
         assert.equal(data.BaseResponse.Ret, 0, res)

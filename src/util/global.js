@@ -56,7 +56,7 @@ export const assert = {
     } catch (e) {
       console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
 
-      debug(e)
+      //debug(e)
       delete response.request
       e.response = response
       throw e
@@ -67,7 +67,7 @@ export const assert = {
       Assert.notEqual(actual, expected)
     } catch (e) {
       console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
-      debug(e)
+      //debug(e)
       delete response.request
       e.response = response
       throw e
@@ -79,7 +79,7 @@ export const assert = {
     } catch (e) {
       console.log(`------ Assertion ------\n${moment().format("YYYY/MM/DD HH:mm:ss")}\n------ End ------`)
 
-      debug(e)
+      //debug(e)
       delete response.request
       e.response = response
       throw e

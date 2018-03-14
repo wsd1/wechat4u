@@ -165,6 +165,8 @@ class Wechat extends WechatCore {
 
   _login () {
     const checkLogin = () => {
+      //console.log('========= checkLogin ==========')
+
       return this.checkLogin()
         .then(res => {
           if (res.code === 201 && res.userAvatar) {
