@@ -7,65 +7,66 @@ const request = require('request')
 const parser = require('xml2json');
 const moment = require('moment');
 
+const cacheDir = 'cache'
 
 
-function startBot(session = 'default-session') {
-  
+
+function startBot(sessionCacheFile) {
+
   let bot
-
-
   /**
    * 尝试获取本地登录数据，免扫码
-   * 这里演示从本地文件中获取数据
+   * 这里从本地文件中获取数据
    */
-  try {
-    bot = new Wechat(require(`./${session}.json`))
-  } catch (e) {
+
+  if (sessionCacheFile) {
+    try {
+      bot = new Wechat(require(sessionCacheFile))
+    } catch (e) {
+      console.log(e)
+      bot = new Wechat()
+    }
+  } else
     bot = new Wechat()
-  }
 
 
 
-  /**
-   * 启动机器人
-   */
-  if (bot.PROP.uin) {
-    // 存在登录数据时，可以随时调用restart进行重启
-    bot.restart()
-  } else {
-    bot.start()
-  }
   /**
    * uuid事件，参数为uuid，根据uuid生成二维码
    */
   bot.on('uuid', uuid => {
-    console.log(`Bot name: ${bot.session}`)
     qrcode.generate('https://login.weixin.qq.com/l/' + uuid, {
       //small: true
     })
     console.log('二维码链接：', 'https://login.weixin.qq.com/qrcode/' + uuid)
   })
+
+
   /**
    * 登录用户头像事件，手机扫描后可以得到登录用户头像的Data URL
    */
   bot.on('user-avatar', avatar => {
     console.log('登录用户头像Data URL：', avatar)
   })
+
+
   /**
    * 登录成功事件
    */
   bot.on('login', () => {
-    console.log(`${bot.session}登录成功`)
+    console.log(`${bot.user.NickName} 登录成功`)
     // 保存数据，将数据序列化之后保存到任意位置
-    fs.writeFileSync(`./${bot.session}.json`, JSON.stringify(bot.botData))
+    fs.writeFileSync(`./${cacheDir}/${bot.user.UserName}.json`, JSON.stringify(bot.botData))
   })
+
+
   /**
    * 登出成功事件
    */
   bot.on('logout', () => {
     console.log(`bot账户[${bot.user.NickName}] 登出成功`)
     // 清除数据
-    fs.unlinkSync(`./${bot.session}.json`)
+    fs.unlinkSync(`./${cacheDir}/${bot.user.UserName}.json`)
   })
   /**
    * 联系人更新事件，参数为被更新的联系人列表
@@ -131,8 +132,8 @@ function startBot(session = 'default-session') {
      * 通过表情MD5发送表情
      */
     bot.sendMsg({
-      emoticonMd5: '00c801cdf69127550d93ca52c3f853ff'
-    }, ToUserName)
+        emoticonMd5: '00c801cdf69127550d93ca52c3f853ff'
+      }, ToUserName)
       .catch(err => {
         bot.emit('error', err)
       })
@@ -223,18 +224,20 @@ function startBot(session = 'default-session') {
     /**
      * 获取消息时间
      */
-    console.log(`-----${bot.session}----- MSG !! ${msg.getDisplayTime()}----------`)
+    console.log(`-----${bot.user.NickName}----- MSG !! ${msg.getDisplayTime()}----------`)
     console.log(`[${moment().format("YYYY/MM/DD HH:mm:ss")}]`);
     /**
      * 获取消息发送者的显示名
      */
-    let from = msg.FromUserName, from_name = bot.contacts[from].getDisplayName();
-    let to = msg.ToUserName, to_name = bot.contacts[to].getDisplayName();
+    let from = msg.FromUserName,
+      from_name = bot.contacts[from].getDisplayName();
+    let to = msg.ToUserName,
+      to_name = bot.contacts[to].getDisplayName();
 
     console.log(`${from_name.slice(0, 4)}(${from.slice(0, 4)}) =====> ${to_name.slice(0, 4)}(${to.slice(0, 4)})，消息类型是：${msg.MsgType}`)
 
-//    if (msg.StatusNotifyUserName)
-//      console.log(`StatusNotifyUserName: ${msg.StatusNotifyUserName} `);
+    //    if (msg.StatusNotifyUserName)
+    //      console.log(`StatusNotifyUserName: ${msg.StatusNotifyUserName} `);
     /**
      * 判断消息类型
      */
@@ -272,8 +275,7 @@ function startBot(session = 'default-session') {
               console.log(`${bot.contacts[p].getDisplayName()}  -->  ${p}`);
             }
           }
-        }
-        else if ("凹凸波特" == bot.contacts[msg.FromUserName].getDisplayName()) {
+        } else if ("凹凸波特" == bot.contacts[msg.FromUserName].getDisplayName()) {
           console.log('----- 凹凸波特 -----')
           console.log(`凹凸波特 的临时id是：${msg.FromUserName}`)
           console.log('----- end -----')
@@ -433,87 +435,118 @@ function startBot(session = 'default-session') {
     }
 
   })
-/**
- * 如何处理红包消息
+  /**
+   * 如何处理红包消息
 
-bot.on('message', msg => {
-  if (msg.MsgType == bot.CONF.MSGTYPE_SYS && /红包/.test(msg.Content)) {
-    // 若系统消息中带有‘红包’，则认为是红包消息
-    // wechat4u并不能自动收红包
-    console.log("收到红包");
-  }
-})
- */
+  bot.on('message', msg => {
+    if (msg.MsgType == bot.CONF.MSGTYPE_SYS && /红包/.test(msg.Content)) {
+      // 若系统消息中带有‘红包’，则认为是红包消息
+      // wechat4u并不能自动收红包
+      console.log("收到红包");
+    }
+  })
+   */
 
-/**
- * 如何处理撤回消息
+  /**
+   * 如何处理撤回消息
 
-bot.on('message', msg => {
-  if (msg.MsgType == bot.CONF.MSGTYPE_RECALLED) {
-    // msg.Content是一个xml，关键信息是MsgId
-    let MsgId = msg.Content.match(/<msgid>(.*?)<\/msgid>.*?<replacemsg><!\[CDATA\[(.*?)\]\]><\/replacemsg>/)[0]
-    // 得到MsgId后，根据MsgId，从收到过的消息中查找被撤回的消息
-  }
-})
- */
+  bot.on('message', msg => {
+    if (msg.MsgType == bot.CONF.MSGTYPE_RECALLED) {
+      // msg.Content是一个xml，关键信息是MsgId
+      let MsgId = msg.Content.match(/<msgid>(.*?)<\/msgid>.*?<replacemsg><!\[CDATA\[(.*?)\]\]><\/replacemsg>/)[0]
+      // 得到MsgId后，根据MsgId，从收到过的消息中查找被撤回的消息
+    }
+  })
+   */
 
-/**
- * 如何处理好友请求消息
+  /**
+   * 如何处理好友请求消息
 
-bot.on('message', msg => {
-  if (msg.MsgType == bot.CONF.MSGTYPE_VERIFYMSG) {
-    bot.verifyUser(msg.RecommendInfo.UserName, msg.RecommendInfo.Ticket)
-      .then(res => {
-        console.log(`通过了 ${bot.Contact.getDisplayName(msg.RecommendInfo)} 好友请求`)
-      })
+  bot.on('message', msg => {
+    if (msg.MsgType == bot.CONF.MSGTYPE_VERIFYMSG) {
+      bot.verifyUser(msg.RecommendInfo.UserName, msg.RecommendInfo.Ticket)
+        .then(res => {
+          console.log(`通过了 ${bot.Contact.getDisplayName(msg.RecommendInfo)} 好友请求`)
+        })
+        .catch(err => {
+          bot.emit('error', err)
+        })
+    }
+  })
+   */
+
+
+
+  /**
+   * 如何直接转发消息
+
+  bot.on('message', msg => {
+    // 不是所有消息都可以直接转发
+    bot.forwardMsg(msg, 'filehelper')
       .catch(err => {
         bot.emit('error', err)
       })
+  })
+
+   */
+
+
+  /**
+   * 如何获取联系人头像
+
+  bot.on('message', msg => {
+
+      bot.getHeadImg(bot.contacts[msg.FromUserName].HeadImgUrl).then(res => {
+        fs.writeFileSync(`./media/${msg.FromUserName}.jpg`, res.data)
+      }).catch(err => {
+        bot.emit('error', err)
+      })
+  })
+   */
+
+
+
+  /**
+   * 启动机器人
+   */
+  if (bot.PROP.uin) {
+    // 存在登录数据时，可以随时调用restart进行重启
+    return bot.restart()
+  } else {
+    return bot.start()
   }
-})
- */
 
-
-
-/**
- * 如何直接转发消息
-
-bot.on('message', msg => {
-  // 不是所有消息都可以直接转发
-  bot.forwardMsg(msg, 'filehelper')
-    .catch(err => {
-      bot.emit('error', err)
-    })
-})
-
- */
-
-
-/**
- * 如何获取联系人头像
-
-bot.on('message', msg => {
-
-    bot.getHeadImg(bot.contacts[msg.FromUserName].HeadImgUrl).then(res => {
-      fs.writeFileSync(`./media/${msg.FromUserName}.jpg`, res.data)
-    }).catch(err => {
-      bot.emit('error', err)
-    })
-})
- */
-
-
-
-  return bot
-
+  
 }
 
 
-startBot()
+let startJob = []
+let caches = fs.readdirSync(`./${cacheDir}`)
+if (caches){
+  caches.forEach(function (file, index) {
+    if (file.endsWith('.json')){
+      console.log(`Found cache file: ${file}, restoring...`)
+      startJob.push(startBot(`./${cacheDir}/${file}`))
+    }
+  })
+}
 
 
+if(startJob.length > 0)
+  Promise.all(startJob).catch(e => {
+    console.log(`-------catch1-------`)
+    debug(e)
+  })
+else{
+  startBot()
+  .then(()=>{
+    return startBot()
+  })
+  .catch(e => {
+    console.log(`-------catch2-------`)
+    debug(e)
+  })
+  
 
-setTimeout(() => {
-  startBot('nextBot')
+}
 
-}, 20000);

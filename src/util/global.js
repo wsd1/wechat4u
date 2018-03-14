@@ -59,7 +59,8 @@ export const assert = {
       //debug(e)
       delete response.request
       e.response = response
-      throw e
+      //throw e
+      throw new Error("Assertion equal")
     }
   },
   notEqual (actual, expected, response) {
@@ -70,7 +71,9 @@ export const assert = {
       //debug(e)
       delete response.request
       e.response = response
-      throw e
+      //throw e
+      throw new Error("Assertion notEqual")
+
     }
   },
   ok (actual, response) {
@@ -82,7 +85,9 @@ export const assert = {
       //debug(e)
       delete response.request
       e.response = response
-      throw e
+      //throw e
+      throw new Error("Assertion ok")
+
     }
   }
 }

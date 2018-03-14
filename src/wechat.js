@@ -180,6 +180,9 @@ class Wechat extends WechatCore {
           }
         })
     }
+
+
+    
     return this.getUUID()
       .then(uuid => {
         debug('getUUID: ', uuid)
