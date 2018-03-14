@@ -9,7 +9,7 @@ const moment = require('moment');
 
 
 
-function startBot(name = 'default-bot') {
+function startBot(session = 'default-session') {
   
   let bot
 
@@ -19,12 +19,11 @@ function startBot(name = 'default-bot') {
    * 这里演示从本地文件中获取数据
    */
   try {
-    bot = new Wechat(require(`./${name}.json`))
+    bot = new Wechat(require(`./${session}.json`))
   } catch (e) {
     bot = new Wechat()
   }
 
-  bot.name = name
 
 
   /**
@@ -40,7 +39,7 @@ function startBot(name = 'default-bot') {
    * uuid事件，参数为uuid，根据uuid生成二维码
    */
   bot.on('uuid', uuid => {
-    console.log(`Bot name: ${bot.name}`)
+    console.log(`Bot name: ${bot.session}`)
     qrcode.generate('https://login.weixin.qq.com/l/' + uuid, {
       //small: true
     })
@@ -56,17 +55,17 @@ function startBot(name = 'default-bot') {
    * 登录成功事件
    */
   bot.on('login', () => {
-    console.log(`${bot.name}登录成功`)
+    console.log(`${bot.session}登录成功`)
     // 保存数据，将数据序列化之后保存到任意位置
-    fs.writeFileSync(`./${bot.name}.json`, JSON.stringify(bot.botData))
+    fs.writeFileSync(`./${bot.session}.json`, JSON.stringify(bot.botData))
   })
   /**
    * 登出成功事件
    */
   bot.on('logout', () => {
-    console.log('登出成功')
+    console.log(`bot账户[${bot.user.NickName}] 登出成功`)
     // 清除数据
-    fs.unlinkSync(`./${bot.name}.json`)
+    fs.unlinkSync(`./${bot.session}.json`)
   })
   /**
    * 联系人更新事件，参数为被更新的联系人列表
@@ -109,6 +108,11 @@ function startBot(name = 'default-bot') {
    * 如何发送消息
    */
   bot.on('login', () => {
+    console.log('--------------------')
+    console.log(`登录者id：\t${bot.user.UserName}`)
+    console.log(`登录者昵称：\t${bot.user.NickName}`)
+    console.log('--------------------')
+
     /**
      * 演示发送消息到文件传输助手
      * 通常回复消息时可以用 msg.FromUserName
@@ -219,7 +223,7 @@ function startBot(name = 'default-bot') {
     /**
      * 获取消息时间
      */
-    console.log(`-----${bot.name}----- MSG !! ${msg.getDisplayTime()}----------`)
+    console.log(`-----${bot.session}----- MSG !! ${msg.getDisplayTime()}----------`)
     console.log(`[${moment().format("YYYY/MM/DD HH:mm:ss")}]`);
     /**
      * 获取消息发送者的显示名
@@ -512,4 +516,4 @@ startBot()
 setTimeout(() => {
   startBot('nextBot')
 
-}, 10000);
+}, 20000);
