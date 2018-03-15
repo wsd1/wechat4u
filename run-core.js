@@ -50,15 +50,7 @@ function startBot(sessionCacheFile) {
   })
 
 
-  /**
-   * 登录成功事件
-   */
-  bot.on('login', () => {
-    console.log(`${bot.user.NickName} 登录成功`)
-    // 保存数据，将数据序列化之后保存到任意位置
-    fs.writeFileSync(`./${cacheDir}/${bot.user.UserName}.json`, JSON.stringify(bot.botData))
-  })
-
+   
 
   /**
    * 登出成功事件
@@ -105,15 +97,20 @@ function startBot(sessionCacheFile) {
   bot.on('error', err => {
     console.error('错误：', err)
   })
+
+
   /**
-   * 如何发送消息
+   * 登录成功事件
    */
+
   bot.on('login', () => {
-    console.log('--------------------')
+    console.log('----------登录成功----------')
     console.log(`登录者id：\t${bot.user.UserName}`)
     console.log(`登录者昵称：\t${bot.user.NickName}`)
     console.log('--------------------')
 
+    fs.writeFileSync(`./${cacheDir}/${bot.user.UserName}.json`, JSON.stringify(bot.botData))
+    console.log(`bot data saved to: ${cacheDir}/${bot.user.UserName}.json`)
     /**
      * 演示发送消息到文件传输助手
      * 通常回复消息时可以用 msg.FromUserName
